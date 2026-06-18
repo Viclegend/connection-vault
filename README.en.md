@@ -17,8 +17,8 @@ Ensure Docker and Docker Compose are installed on your host.
 
 **1. Clone the Repository**
 ```bash
-git clone [https://github.com/YOUR_USERNAME/client-manager.git](https://github.com/YOUR_USERNAME/client-manager.git)
-cd client-manager
+git clone [https://github.com/Viclegend/connection-vault.git](https://github.com/Viclegend/connection-vault.git)
+cd connection-vault
 ```
 
 **2. Configure Environment**

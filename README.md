@@ -17,8 +17,8 @@
 
 **1. 下載專案**
 ```bash
-git clone [https://github.com/您的帳號/client-manager.git](https://github.com/您的帳號/client-manager.git)
-cd client-manager
+git clone [https://github.com/Viclegend/connection-vault.git](https://github.com/Viclegend/connection-vault.git)
+cd connection-vault
 ```
 
 **2. 環境變數設定**

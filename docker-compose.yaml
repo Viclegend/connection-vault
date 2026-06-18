@@ -1,7 +1,7 @@
 services:
   client-app:
     container_name: client-manager-service
-    image: ghcr.io/viclegend/client-manager:latest
+    image: ghcr.io/viclegend/connection-vault:latest
     ports:
       - "${HOST_PORT}:8080"
     volumes:
