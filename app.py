@@ -262,6 +262,17 @@ def add_device(group_id):
         conn.close()
     return redirect(url_for('index'))
 
+# 💡 補回的刪除設備功能
+@app.route('/delete_device/<int:device_id>', methods=['POST'])
+def delete_device(device_id):
+    if not session.get('logged_in'): return redirect(url_for('login'))
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM devices WHERE id = ?', (device_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
+
 @app.route('/download_template')
 def download_template():
     if not session.get('logged_in'): return redirect(url_for('login'))
