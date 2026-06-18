@@ -1,11 +1,11 @@
 services:
   client-app:
-    image: client-manager-app:v6
-    container_name: my-client-db
+    container_name: client-manager-service
+    image: ghcr.io/viclegend/client-manager:latest
     ports:
-      - "${HOST_PORT}:8080"  # 由.env 注入
+      - "${HOST_PORT}:8080"
     volumes:
       - ./data:/app/data
     env_file:
-      - .env                 # 載入.env 環境變數檔
+      - .env
     restart: unless-stopped
