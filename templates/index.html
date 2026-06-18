@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <title>連線資訊庫</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .pwd-toggle-btn { cursor: pointer; user-select: none; }
+        /* 避免點擊刪除按鈕時觸發手風琴展開 */
+        .accordion-button::after { margin-left: auto; }
+    </style>
+</head>
+<body class="container mt-4 mb-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">🛡️ 連線資訊庫</h2>
+        <div class="d-flex align-items-center gap-3">
+            <form action="/" method="GET" class="d-flex">
+                <input type="text" name="q" class="form-control me-2" placeholder="搜尋..." value="{{ search_query }}" style="width: 250px;">
+                <button type="submit" class="btn btn-outline-success text-nowrap">搜尋</button>
+                {% if search_query %}
+                <a href="/" class="btn btn-outline-secondary ms-1 text-nowrap">清除</a>
+                {% endif %}
+            </form>
+            <div class="form-check form-switch fs-5 mb-0" title="切換深色模式">
+                <input class="form-check-input" type="checkbox" id="themeToggle">
+                <label class="form-check-label" for="themeToggle">🌙</label>
+            </div>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClientModal">➕ 客戶</button>
+            <a href="/logout" class="btn btn-danger">登出</a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+            <strong>通知：</strong> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="modal fade" id="addClientModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="/add_client" method="POST">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">新增客戶分類</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" name="client_name" class="form-control" placeholder="請輸入客戶名稱" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary w-100">儲存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteClientModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-danger">
+                <form action="/delete_client" method="POST">
+                    <input type="hidden" name="client_id" id="delClientId">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">⚠️ 刪除客戶：<span id="delClientName"></span></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="delClientMsg" class="text-danger fw-bold"></p>
+                        <div class="mb-3 d-none" id="delClientPwdDiv">
+                            <label class="form-label">請輸入管理員密碼以確認授權</label>
+                            <input type="password" name="password" id="delClientPwd" class="form-control border-danger">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-danger">確認刪除</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if clients %}
+    <div class="card card-body mb-4 shadow-sm bg-body-tertiary">
+        <form action="/add_device" method="POST" class="row g-2">
+            <div class="col-md-2">
+                <select name="client_id" class="form-select" required>
+                    <option value="" disabled selected>選擇客戶...</option>
+                    {% for client in clients %}
+                    <option value="{{ client['id'] }}">{{ client['name'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2"><input type="text" name="device_name" class="form-control" placeholder="設備名稱" required></div>
+            <div class="col-md-2"><input type="text" name="ip_address" class="form-control" placeholder="IP 位址"></div>
+            <div class="col-md-2"><input type="text" name="conn_method" class="form-control" placeholder="連線方式"></div>
+            <div class="col-md-1"><input type="text" name="username" class="form-control" placeholder="帳號"></div>
+            <div class="col-md-2"><input type="password" name="password" class="form-control" placeholder="密碼"></div>
+            <div class="col-md-1"><button type="submit" class="btn btn-success w-100">新增</button></div>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="accordion" id="clientAccordion">
+        {% for group in grouped_data %}
+            {% if group.devices or not search_query %}
+            <div class="accordion-item shadow-sm mb-2 border">
+                <h2 class="accordion-header d-flex">
+                    <button class="accordion-button {% if not search_query %}collapsed{% endif %} bg-secondary-subtle" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ loop.index }}">
+                        <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                            <span>🏢 <strong>{{ group.name }}</strong> <span class="badge text-bg-secondary rounded-pill ms-2">{{ group.devices|length }} 台設備</span></span>
+                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                    data-client-id="{{ group.id }}" 
+                                    data-client-name="{{ group.name }}" 
+                                    data-device-count="{{ group.devices|length }}"
+                                    onclick="event.stopPropagation(); showDeleteClientModal(this);">刪除分類</button>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse {% if search_query %}show{% endif %}">
+                    <div class="accordion-body p-0">
+                        {% if group.devices %}
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th style="width: 20%; padding-left: 1rem;">設備名稱</th>
+                                    <th style="width: 15%;">IP 位址</th>
+                                    <th style="width: 15%;">連線方式</th>
+                                    <th style="width: 15%;">帳號</th>
+                                    <th style="width: 20%;">密碼</th>
+                                    <th class="text-center" style="width: 15%;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for device in group.devices %}
+                                <tr>
+                                    <td style="padding-left: 1rem;"><strong>{{ device['device_name'] }}</strong></td>
+                                    <td><span class="badge text-bg-dark">{{ device['ip_address'] }}</span></td>
+                                    <td>{{ device['conn_method'] }}</td>
+                                    <td class="text-primary fw-bold">{{ device['username'] }}</td>
+                                    <td>
+                                        <span class="pwd-display text-muted">********</span>
+                                        <span class="pwd-real text-danger font-monospace d-none">{{ device['password'] }}</span>
+                                        <span class="pwd-toggle-btn ms-2 text-decoration-none" title="顯示/隱藏">👁️</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="/edit/{{ device['id'] }}" class="btn btn-sm btn-outline-primary">編輯</a>
+                                        <a href="/delete/{{ device['id'] }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('確定刪除 {{ device['device_name'] }} 嗎？');">刪除</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div class="p-3 text-muted text-center">此客戶目前沒有設備資料。</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <script>
+        // 日夜模式切換
+        const themeToggle = document.getElementById('themeToggle');
+        const htmlElement = document.documentElement;
+        if (localStorage.getItem('theme') === 'dark') {
+            htmlElement.setAttribute('data-bs-theme', 'dark');
+            themeToggle.checked = true;
+        }
+        themeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                htmlElement.setAttribute('data-bs-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                htmlElement.setAttribute('data-bs-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // 密碼顯示切換
+        document.querySelectorAll('.pwd-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const td = this.closest('td');
+                const display = td.querySelector('.pwd-display');
+                const real = td.querySelector('.pwd-real');
+                if (real.classList.contains('d-none')) {
+                    real.classList.remove('d-none');
+                    display.classList.add('d-none');
+                } else {
+                    real.classList.add('d-none');
+                    display.classList.remove('d-none');
+                }
+            });
+        });
+
+        // 刪除客戶 Modal 動態邏輯
+        function showDeleteClientModal(btn) {
+            const clientId = btn.getAttribute('data-client-id');
+            const clientName = btn.getAttribute('data-client-name');
+            const deviceCount = parseInt(btn.getAttribute('data-device-count'));
+
+            document.getElementById('delClientId').value = clientId;
+            document.getElementById('delClientName').innerText = clientName;
+            
+            const pwdDiv = document.getElementById('delClientPwdDiv');
+            const pwdInput = document.getElementById('delClientPwd');
+            const msg = document.getElementById('delClientMsg');
+            
+            if (deviceCount > 0) {
+                pwdDiv.classList.remove('d-none');
+                pwdInput.required = true;
+                msg.innerText = `注意：此分類下還有 ${deviceCount} 台設備，刪除分類將會一併清空旗下所有設備！`;
+            } else {
+                pwdDiv.classList.add('d-none');
+                pwdInput.required = false;
+                pwdInput.value = ''; // 清空密碼框避免干擾
+                msg.innerText = `此分類目前沒有設備，確定要直接刪除嗎？`;
+            }
+            
+            new bootstrap.Modal(document.getElementById('deleteClientModal')).show();
+        }
+    </script>
+</body>
+</html>
