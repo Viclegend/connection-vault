@@ -1,6 +1,6 @@
 services:
   client-app:
-    container_name: client-manager-service
+    container_name: connection-vault
     image: ghcr.io/viclegend/connection-vault:latest
     ports:
       - "${HOST_PORT}:8080"
