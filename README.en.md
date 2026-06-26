@@ -17,7 +17,7 @@ Ensure Docker and Docker Compose are installed on your host.
 
 **1. Clone the Repository**
 ```bash
-git clone [https://github.com/Viclegend/connection-vault.git](https://github.com/Viclegend/connection-vault.git)
+git clone https://github.com/Viclegend/connection-vault.git
 cd connection-vault
 ```
 
